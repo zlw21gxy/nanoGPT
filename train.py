@@ -127,6 +127,32 @@ def get_batch(split):
         x, y = x.to(device), y.to(device)
     return x, y
 
+class get_batch_RL:
+    def __init__(self, data_dir=None) -> None:
+        self.data_dir = os.path.join('data', dataset)
+        self.num_of_files = len(os.listdir(data_dir))
+        self.idx = np.random.shuffle(range(self.num_of_files))
+
+    def reload_data(self):
+        idx_now = self.idx.pop(0)
+        data = torch.load(self.filename + f"_{idx_now}")
+        return data
+
+
+
+
+def get_batch_RL(split):
+    data = train_data if split == 'train' else val_data
+    ix = torch.randint(len(data) - block_size, (batch_size,))
+    x = torch.stack([torch.from_numpy((data[i:i+block_size])) for i in ix])
+    y = torch.stack([torch.from_numpy((data[i+1:i+1+block_size])) for i in ix])
+    if device_type == 'cuda':
+        # pin arrays x,y, which allows us to move them to GPU asynchronously (non_blocking=True)
+        x, y = x.pin_memory().to(device, non_blocking=True), y.pin_memory().to(device, non_blocking=True)
+    else:
+        x, y = x.to(device), y.to(device)
+    return x, y
+
 # init these up here, can override if init_from='resume' (i.e. from a checkpoint)
 iter_num = 0
 best_val_loss = 1e9
